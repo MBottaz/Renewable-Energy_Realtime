@@ -7,3 +7,4 @@ Alveare
 .env
 .ruff_cache
 __pycache__
+.env

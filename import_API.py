@@ -1,12 +1,24 @@
 import os
+from pathlib import Path
+
 import pandas as pd
+from dotenv import load_dotenv
 from entsoe import EntsoePandasClient
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
+# Load environment variables from a local .env file (if it exists).
+# This allows you to keep secrets like ENTSOe_KEY out of source control.
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[0] / ".env")
+
+
 def get_ENTSOe_KEY():
-    load_dotenv()  # loads variables from .env into environment
-    key = os.getenv("ENTSOe_KEY")
+    key = os.getenv('ENTSOe_KEY')
+    if not key:
+        raise RuntimeError(
+            "ENTSOe_KEY is not set. Add it to a .env file or export it in your shell.\n"
+            "Example: ENTSOe_KEY=your_api_key_here"
+        )
     return key
 
 # Function to query installed capacity
@@ -27,6 +39,12 @@ def query_load_data(api_key, country_code, start_date, end_date):
     load_data = client.query_load(country_code, start=start_date, end=end_date)
     return load_data
 
+
+# Process MultiIndex columns in the generation data
+def process_multiindex_columns(df):
+    if df.columns.nlevels > 1:
+        df = df.xs("Actual Aggregated", level=1, axis=1)
+    return df
 
 # Main function to orchestrate the process
 def main():
@@ -73,14 +91,17 @@ def main():
     print("generation data")
     # Query generation data for each type of PSR
     generation_data = {}
-    psr_types = ['B01', 'B09', 'B10', 'B11', 'B12', 'B13', 'B16', 'B18', 'B19']
+    psr_types = ['B01', 'B09', 'B10', 'B11', 'B12','B15', 'B16', 'B18', 'B19']
     client = EntsoePandasClient(api_key=api_key)
+
     for psr_type in psr_types:
         # print(psr_type)
         generation_data[psr_type] = client.query_generation(country_code, start=start_date, end=end_date, psr_type=psr_type)
-    
+        generation_data[psr_type] = process_multiindex_columns(generation_data[psr_type])
+        print(generation_data[psr_type].columns)
 
     
+
     # Create a new column for each of the psr types and add the data to it
     for psr_type in psr_types:
         if isinstance(generation_data[psr_type], tuple):
@@ -90,6 +111,7 @@ def main():
     # Rename the columns in the DataFrame
     load_data = load_data.rename(columns=column_mapping)
 
+    print(load_data)
 
     load_data.to_csv('data/italy_load_generation.csv', index=True)
 

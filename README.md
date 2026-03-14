@@ -15,7 +15,7 @@ pip install pandas matplotlib entsoe-pandas-client
 ## Configurazione API ENTSO-E
 
 1. Registrarsi su [ENTSO-E Transparency Platform](https://transparency.entsoe.eu/)
-2. Ottenere la chiave API
+2. Ottenere la chiave API da questo link: https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html
 3. Esportare la variabile di ambiente:
    ```bash
    export ENTSOe_KEY="la_tua_chiave_api"
