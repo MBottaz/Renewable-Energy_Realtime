@@ -3,3 +3,6 @@ data/
 *.json
 net-zero-e-conomy-2050-report-eng-enel-2022090311.pdf
 Alveare
+.venv
+.ruff_cache
+__pycache__
