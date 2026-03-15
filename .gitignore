@@ -1,8 +1,9 @@
-data/
+data/*
 *.csv
 *.json
 net-zero-e-conomy-2050-report-eng-enel-2022090311.pdf
 Alveare
 .venv
+.env
 .ruff_cache
 __pycache__
