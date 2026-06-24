@@ -1,223 +1,129 @@
-# Renewable Energy Realtime
+# Energy Scenarios — Mix Energetico Europeo
 
-Progetto Python per l'analisi della produzione energetica italiana con focus sulle fonti rinnovabili.
+Sito web **statico** (GitHub Pages-ready) per visualizzare e simulare scenari
+di mix energetico orario per uno o più paesi europei.
 
-## Scopo del progetto
+**Dati**: [ENTSO-E Transparency Platform](https://transparency.entsoe.eu/)<br>
+**Stack**: HTML + CSS + JavaScript vanilla + [Chart.js](https://www.chartjs.org/) (CDN)<br>
+**Pre-processing**: script Python `energy-scenarios/fetch_data.py`
 
-Recupera dati di produzione energetica italiana dall'API pubblica ENTSO-E, rimuove le fonti fossili (Fossil Coal-derived gas, Fossil Gas, Fossil Hard coal, Fossil Oil) e calcola l'energia non coperta dalle rinnovabili nella colonna "Other".
+---
 
-## Dipendenze
+## Funzionalità
+
+- **Selezione multi-paese** — scegli e combina paesi (IT, DE, FR, ES, ...)
+- **Tabella capacità installata** — modifica la potenza per fonte e scala la generazione
+- **KPI** — ore surplus rinnovabile, ore fissate dal gas, quota rinnovabile %
+- **Duration curve** — surplus rinnovabile ordinato decrescente
+- **Grafico settimanale** — stacked area per fonte + linea carico
+
+## Struttura
+
+```
+energy-scenarios/
+├── index.html              ← pagina principale
+├── style.css               ← stili
+├── app.js                  ← logica frontend (Chart.js)
+├── config.json             ← configurazione API (da editare)
+├── fetch_data.py           ← script Python per scaricare dati reali
+└── data/
+    ├── countries.json      ← elenco paesi
+    ├── capacity_IT.json    ← capacità installata (mock o reali)
+    ├── capacity_DE.json
+    ├── ...
+    ├── generation_IT_2024.json  ← generazione oraria (mock o reali)
+    └── generation_DE_2024.json
+```
+
+---
+
+## Come usare
+
+### 1. Apri la pagina
+
+Con i dati mock già pronti:
 
 ```bash
-pip install pandas matplotlib entsoe-pandas-client
+cd energy-scenarios
+python -m http.server 8000
 ```
 
-## Configurazione API ENTSO-E
+Apri `http://localhost:8000` nel browser.
 
-1. Registrarsi su [ENTSO-E Transparency Platform](https://transparency.entsoe.eu/)
-2. Ottenere la chiave API da questo link: https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html
-3. Esportare la variabile di ambiente:
-   ```bash
-   export ENTSOe_KEY="la_tua_chiave_api"
-   ```
+### 2. Scarica dati reali (opzionale)
 
-## Come eseguire lo script
-
-### 1. Recupero dati dall'API
+1. Ottieni un token API da [ENTSO-E Transparency Platform](https://transparency.entsoe.eu/)
+2. Configuralo in `config.json` o come variabile d'ambiente (`ENTSOE_TOKEN`)
+3. Esegui lo script:
 
 ```bash
-python import_API.py
+cd energy-scenarios
+pip install entsoe-py pandas python-dotenv requests
+python fetch_data.py
 ```
 
-Genera i file:
-- `data/italy_load_generation.csv` - Dati di generazione e carico
-- `data/Installed_Capacity.csv` - Capacità installata
+I file JSON nella cartella `data/` verranno sovrascritti con dati reali.
 
-### 2. Analisi e visualizzazione
+---
+
+## Struttura dei dati
+
+### `capacity_{CC}.json`
+
+```json
+{
+  "country": "IT",
+  "updated": "2024-11-01",
+  "sources": {
+    "Solar": 32000,
+    "Wind Onshore": 11800,
+    "Wind Offshore": 0,
+    "Hydro": 22000,
+    "Nuclear": 0,
+    "Gas": 46000,
+    "Coal": 8000,
+    "Other": 5000
+  }
+}
+```
+
+### `generation_{CC}_{YYYY}.json`
+
+```json
+{
+  "country": "IT",
+  "year": 2024,
+  "hours": 8760,
+  "sources": ["Solar","Wind Onshore","Hydro","Gas","Coal","Other"],
+  "load": [array di 8760 float in MW],
+  "generation": {
+    "Solar": [8760 float],
+    "Wind Onshore": [8760 float],
+    "Hydro": [8760 float],
+    "Gas": [8760 float],
+    "Coal": [8760 float],
+    "Other": [8760 float]
+  }
+}
+```
+
+---
+
+## Sviluppo
+
+### Generazione dati mock
 
 ```bash
-python EnergyMatch.py
+python generate_mock_data.py
 ```
 
-Genera un grafico a barre della produzione energetica.
+Genera 8760 ore di dati sintetici realistici per tutti i 9 paesi.
 
-## Struttura del codice
+---
 
-- `import_API.py` - Fetch dei dati dall'API ENTSO-E
-- `EnergyMatch.py` - Elaborazione dati e visualizzazione
+## Cronologia
 
-### Funzioni principali (EnergyMatch.py)
-
-| Funzione | Descrizione |
-|----------|--------------|
-| `load_generation_data()` | Carica dati di generazione dal CSV |
-| `load_installed_capacity()` | Carica capacità installata |
-| `calculate_capacity_factors()` | Calcola i fattori di capacità |
-| `apply_capacity_factors()` | Applica i fattori ai dati di generazione |
-| `plot_generation()` | Genera il grafico |
-
-### Costanti
-
-- `FOSSIL_COLUMNS` - Fonti fossili da escludere
-- `RENEWABLE_COLUMNS` - Fonti rinnovabili incluse
-
-## Dati richiesti
-
-I seguenti file devono essere presenti nella cartella `data/`:
-- `italy_load_generation.csv` - Generato da `import_API.py`
-- `Installed_Capacity.csv` - Generato da `import_API.py`
-- `Target.csv` - Obiettivi di capacità (Solar, Wind)
-
-# Energy System Simulation
-
-This script simulates an energy system by scaling actual production data proportionally to target installed capacities and visualizes the results with a stacked area chart.
-
-## Features
-
-- **Proportional Scaling**: Scales production data based on target vs actual capacity ratios
-- **Comprehensive Visualization**: Stacked area chart showing production by source vs demand
-- **Flexible Input**: Customizable target capacities through CSV file
-- **Automatic Data Handling**: Creates default target file if missing
-- **Detailed Statistics**: Shows capacity information and simulation results
-
-## Requirements
-
-```bash
-pip install pandas matplotlib
-```
-
-## Usage
-
-### Basic Execution
-
-```bash
-python energy_system_simulation.py
-```
-
-### Input Files
-
-The script requires the following files in the `data/` directory:
-
-1. **`italy_load_generation.csv`** - Actual generation data (generated by `import_API.py`)
-2. **`Installed_Capacity.csv`** - Actual installed capacity (generated by `import_API.py`)
-3. **`Target.csv`** - Target installed capacity (created automatically if missing)
-
-### Target Capacity File Format
-
-The `Target.csv` file should contain target capacities in MW for each renewable source:
-
-```csv
-Biomass,Geothermal,Hydro Run-of-river and poundage,Hydro Water Reservoir,Solar,Wind Offshore,Wind Onshore
-2308.5,1302.0,12380.4,5457.6,26766.0,75.0,30582.5
-```
-
-### Example Target Files
-
-The repository includes example target files:
-
-- **`Target.csv`** - Default (2x actual capacity for all sources)
-- **`Target_Varied_Example.csv`** - Varied scaling factors (1.2x-3x for different sources)
-- **`Target_Default_Example.csv`** - Backup of original default
-
-## Output
-
-### Console Output
-
-The script displays:
-
-1. **Capacity Information**: Shows actual vs target capacities and scaling factors
-2. **Simulation Results**: Total demand, renewable production, and "Other" production
-3. **Visualization**: Stacked area chart with production by source and demand
-
-### Visualization
-
-The stacked area chart shows:
-
-- **Colored Areas**: Production from each renewable source (Biomass, Geothermal, Hydro, Solar, Wind)
-- **Gray Area**: "Other" production (demand not met by renewables)
-- **Red Dashed Line**: Electricity demand
-- **Time Axis**: Hourly data points with formatted labels
-
-## Implementation Details
-
-### Scaling Logic
-
-For each renewable source:
-
-```
-scaling_factor = target_capacity / actual_capacity
-scaled_production = actual_production * scaling_factor
-```
-
-### "Other" Calculation
-
-```
-Other = max(0, Demand - Total_Renewable_Production)
-```
-
-### Color Coding
-
-- **Biomass**: Brown (#8B4513)
-- **Geothermal**: Forest Green (#228B22)
-- **Hydro River**: Dodger Blue (#1E90FF)
-- **Hydro Reservoir**: Dark Green (#006400)
-- **Solar**: Gold (#FFD700)
-- **Wind**: Blue shades (#4169E1, #4682B4)
-- **Other**: Gray (#808080)
-- **Demand**: Red dashed line
-
-## Example Scenarios
-
-### Scenario 1: Default (2x Capacity)
-
-```bash
-# Uses Target.csv (default 2x scaling)
-python energy_system_simulation.py
-```
-
-**Results**: ~38% renewable share, ~62% other
-
-### Scenario 2: Varied Scaling
-
-```bash
-# Copy varied example and run
-cp data/Target_Varied_Example.csv data/Target.csv
-python energy_system_simulation.py
-```
-
-**Results**: ~47% renewable share, ~53% other (aggressive solar expansion)
-
-## Technical Notes
-
-- **Data Validation**: Script validates input files and handles missing data gracefully
-- **Error Handling**: Comprehensive error messages for missing files or invalid data
-- **Performance**: Optimized for typical energy dataset sizes
-- **Compatibility**: Works with Python 3.8+
-
-## Troubleshooting
-
-### Missing Data Files
-
-If you get "File not found" errors:
-
-```bash
-# Generate required data files
-python import_API.py
-```
-
-### Invalid Target File Format
-
-Ensure your `Target.csv` file:
-- Has correct column names matching the generation data
-- Contains only numeric values (no comments or headers)
-- Uses comma-separated values
-
-### Visualization Issues
-
-If the plot doesn't display:
-- Check matplotlib installation: `pip install matplotlib`
-- Try running with different backend: `export MPLBACKEND=tkagg`
-
-## License
-
-This script is part of the Renewable Energy Realtime project and follows the same licensing terms.
+| Versione | Descrizione |
+|----------|-------------|
+| v0.1     | Script Python per analisi energetica Italia (import_API.py, EnergyMatch.py) |
+| **v0.2** | **Riscrittura completa**: sito statico web, multi-paese, Chart.js |

@@ -1,0 +1,14 @@
+{
+  "country": "ES",
+  "updated": "2024-11-01",
+  "sources": {
+    "Solar": 28000,
+    "Wind Onshore": 28000,
+    "Wind Offshore": 0,
+    "Hydro": 17000,
+    "Nuclear": 7000,
+    "Gas": 26000,
+    "Coal": 5000,
+    "Other": 4000
+  }
+}

@@ -1,0 +1,259 @@
+/* === Reset & Base === */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: #f5f7f6;
+  color: #1a2b28;
+  line-height: 1.6;
+  padding: 0 1rem;
+}
+
+header, footer {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a6b4c;
+}
+
+header p {
+  color: #4a6b5f;
+  font-size: 1rem;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+section h2 {
+  font-size: 1.25rem;
+  color: #1a6b4c;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #e0f0e9;
+  padding-bottom: 0.5rem;
+}
+
+/* === Country Selector === */
+#country-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.country-btn {
+  padding: 0.4rem 0.8rem;
+  border: 1.5px solid #b8d4ca;
+  border-radius: 20px;
+  background: #f0f8f4;
+  color: #1a2b28;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+
+.country-btn.selected {
+  background: #1a6b4c;
+  color: #fff;
+  border-color: #1a6b4c;
+}
+
+.country-btn:hover {
+  border-color: #1a6b4c;
+}
+
+/* === Capacity Table === */
+#capacity-updated {
+  font-size: 0.85rem;
+  color: #5a7b6f;
+  margin-bottom: 0.75rem;
+}
+
+#capacity-table-wrapper {
+  overflow-x: auto;
+}
+
+#capacity-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+#capacity-table th,
+#capacity-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e0eae5;
+  white-space: nowrap;
+}
+
+#capacity-table th {
+  background: #e8f2ed;
+  font-weight: 600;
+}
+
+#capacity-table input[type="number"] {
+  width: 90px;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid #c8d8d2;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+#capacity-table input[type="number"]:focus {
+  outline: 2px solid #1a6b4c;
+  border-color: transparent;
+}
+
+.reset-btn {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid #d0d8d5;
+  border-radius: 4px;
+  background: #f5f8f7;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.reset-btn:hover {
+  background: #e0ece6;
+}
+
+/* === Date Controls === */
+#date-controls {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+#date-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+#date-controls input[type="date"] {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #c8d8d2;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+/* === KPI Cards === */
+#kpi-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.kpi-card {
+  border: 1px solid #d0e0da;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  background: #fafffd;
+}
+
+.kpi-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a6b4c;
+  line-height: 1.2;
+}
+
+.kpi-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #5a7b6f;
+  margin-top: 0.3rem;
+}
+
+/* === Chart Containers === */
+.chart-container {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 400px;
+}
+
+/* === Weekly Controls === */
+#weekly-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+#weekly-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+
+#week-slider {
+  width: 200px;
+  accent-color: #1a6b4c;
+}
+
+/* === Footer === */
+footer {
+  font-size: 0.8rem;
+  color: #6a8b7f;
+}
+
+footer a {
+  color: #1a6b4c;
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* === Responsive === */
+@media (max-width: 640px) {
+  #kpi-cards {
+    grid-template-columns: 1fr;
+  }
+
+  #date-controls {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  #capacity-table {
+    font-size: 0.8rem;
+  }
+
+  #capacity-table input[type="number"] {
+    width: 70px;
+  }
+
+  section {
+    padding: 1rem;
+  }
+}

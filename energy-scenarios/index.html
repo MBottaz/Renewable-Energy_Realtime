@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Energy Scenarios — Mix Energetico Europeo</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>Energy Scenarios</h1>
+    <p>Visualizza e simula scenari di mix energetico orario per paesi europei</p>
+  </header>
+
+  <main>
+    <!-- Step 1-2: Country Selection -->
+    <section id="country-section">
+      <h2>Selezione Paesi</h2>
+      <div id="country-selector"></div>
+    </section>
+
+    <!-- Step 2: Capacity Table -->
+    <section id="capacity-section">
+      <h2>Capacità Installata</h2>
+      <p id="capacity-updated"></p>
+      <div id="capacity-table-wrapper">
+        <table id="capacity-table">
+          <thead>
+            <tr>
+              <th>Fonte</th>
+              <th>Potenza attuale (MW)</th>
+              <th>Potenza scenario (MW)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="capacity-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Step 3: Date Range & KPI -->
+    <section id="kpi-section">
+      <h2>Intervallo Temporale e KPI</h2>
+      <div id="date-controls">
+        <label>Da: <input type="date" id="date-from"></label>
+        <label>A: <input type="date" id="date-to"></label>
+      </div>
+      <div id="kpi-cards">
+        <div class="kpi-card">
+          <span class="kpi-value" id="kpi-surplus">—</span>
+          <span class="kpi-label">Ore surplus rinnovabile</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-value" id="kpi-deficit">—</span>
+          <span class="kpi-label">Ore fissate dal gas</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-value" id="kpi-renewable">—</span>
+          <span class="kpi-label">Quota rinnovabile %</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 4: Duration Curve -->
+    <section id="duration-section">
+      <h2>Duration Curve — Surplus Rinnovabile</h2>
+      <div class="chart-container">
+        <canvas id="duration-chart"></canvas>
+      </div>
+    </section>
+
+    <!-- Step 5: Weekly Chart -->
+    <section id="weekly-section">
+      <h2>Grafico Settimanale</h2>
+      <div id="weekly-controls">
+        <label>Settimana: <input type="range" id="week-slider" min="1" max="52" value="52"> <span id="week-label">52</span></label>
+      </div>
+      <div class="chart-container">
+        <canvas id="weekly-chart"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Dati: <a href="https://transparency.entsoe.eu/" target="_blank" rel="noopener">ENTSO-E Transparency Platform</a></p>
+    <p><a href="https://github.com/SantaKl4us/Renewable-Energy_Realtime" target="_blank" rel="noopener">GitHub</a></p>
+  </footer>
+</body>
+</html>

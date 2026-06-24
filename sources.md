@@ -1,22 +1,28 @@
-Here I keep track of the assumptions I have made and some explaination that can help a better understanding of the simulations.
+# Fonti e Assunzioni
 
-**Solar Target Capacity**: TBD
+## ENTSO-E Transparency Platform
 
-**Wind Target Capacity** I've assumed 100GW, that is the amount of the wind farms currently under approval, according to [IEA](https://iea-wind.org/wp-content/uploads/2023/10/Italy_2022.pdf)
+I dati provengono da ENTSO-E, la piattaforma europea di trasparenza energetica.
+API: https://transparency.entsoe.eu/
 
-**Hydro** I've got data for three different Hydro power plants:
-- *Rivers*: Not flexible;
-- *Lakes*: Flaxible consumption, not flexible recharge;
-- *Pumped*: Flexible consumption and recharge.
+## Categorie semplificate
 
-The order the power plants are exploited is the following:
-1. Inflexible renewable generation (Solar, Wind, Geothermal, River-type-Hydro);
-2. Pumped Hydro;
-3. Lakes;
-4. Storage;
-5. Other sources.
+Il frontend usa 8 categorie raggruppate dai codici ENTSO-E:
 
-In case of excess generation the model behaves as following:
-1. The pumped hydro is recharged;
-2. Other storage is recharged.
-3. Curtailment.
+| Categoria | Codici ENTSO-E | Rinnovabile |
+|-----------|----------------|-------------|
+| Solar | B16 | ✅ |
+| Wind Onshore | B19 | ✅ |
+| Wind Offshore | B18 | ✅ |
+| Hydro | B10, B11, B12 | ✅ |
+| Nuclear | B14 | ❌ (neutro) |
+| Gas | B04 | ❌ |
+| Coal | B02, B03, B05 | ❌ |
+| Other | B01, B06-B09, B13, B15, B17, B20 | ❌ |
+
+## Scenario scaling
+
+Quando l'utente modifica la capacità scenario per una fonte:
+  gen_scaled[h] = gen_originale[h] × (capacità_scenario / capacità_attuale)
+
+Questo avviene lato client (JavaScript), senza modificare i dati caricati.
