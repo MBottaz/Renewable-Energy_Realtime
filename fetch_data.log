@@ -1,0 +1,47 @@
+============================================================
+fetch_data.py — Aggiornamento dati ENTSO-E
+============================================================
+Token: ✅ configurato
+Paesi: IT, DE, FR, ES, PL, NL, BE, AT, CH
+Anno:  2024
+
+
+--- IT ---
+  Capacità installata...
+  -> Salvato: /home/santaklaus/Documenti/Progetti/Renewable-Energy_Realtime/data/capacity_IT.json
+  Generazione oraria...
+  -> Salvato: /home/santaklaus/Documenti/Progetti/Renewable-Energy_Realtime/data/generation_IT_2024.json
+  IT: 8784 ore, 5377/61488 valori zero (8.7%), range: 2024-01-01 00:00:00+01:00 → 2024-12-31 23:00:00+01:00
+
+--- DE ---
+  Capacità installata...
+  -> Salvato: /home/santaklaus/Documenti/Progetti/Renewable-Energy_Realtime/data/capacity_DE.json
+  Generazione oraria...
+  -> Salvato: /home/santaklaus/Documenti/Progetti/Renewable-Energy_Realtime/data/generation_DE_2024.json
+  DE: 8784 ore, 6/61488 valori zero (0.0%), range: 2024-01-01 00:00:00+01:00 → 2024-12-31 23:00:00+01:00
+
+--- FR ---
+  Capacità installata...
+  -> Salvato: /home/santaklaus/Documenti/Progetti/Renewable-Energy_Realtime/data/capacity_FR.json
+  Generazione oraria...
+  -> Salvato: /home/santaklaus/Documenti/Progetti/Renewable-Energy_Realtime/data/generation_FR_2024.json
+  FR: 8784 ore, 10756/70272 valori zero (15.3%), range: 2024-01-01 00:00:00+01:00 → 2024-12-31 23:00:00+01:00
+
+--- ES ---
+  Capacità installata...
+  -> Salvato: /home/santaklaus/Documenti/Progetti/Renewable-Energy_Realtime/data/capacity_ES.json
+  Generazione oraria...
+  -> Salvato: /home/santaklaus/Documenti/Progetti/Renewable-Energy_Realtime/data/generation_ES_2024.json
+  ES: 8784 ore, 0/61488 valori zero (0.0%), range: 2024-01-01 00:00:00+01:00 → 2024-12-31 23:00:00+01:00
+
+--- PL ---
+  Capacità installata...
+  -> Salvato: /home/santaklaus/Documenti/Progetti/Renewable-Energy_Realtime/data/capacity_PL.json
+  Generazione oraria...
+  -> Salvato: /home/santaklaus/Documenti/Progetti/Renewable-Energy_Realtime/data/generation_PL_2024.json
+  PL: 8784 ore, 3714/52704 valori zero (7.0%), range: 2024-01-01 00:00:00+01:00 → 2024-12-31 23:00:00+01:00
+
+--- NL ---
+  Capacità installata...
+  -> Salvato: /home/santaklaus/Documenti/Progetti/Renewable-Energy_Realtime/data/capacity_NL.json
+  Generazione oraria...

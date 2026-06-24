@@ -1,8 +1,11 @@
 # Root data directory (old CSV data)
 /data/
 
+# Pi side-agent runtime (local config — do NOT commit)
+.pi/
+
 # Ignore generated generation JSON (large files)
-energy-scenarios/data/generation_*.json
+data/generation_*.json
 
 # Python
 __pycache__/

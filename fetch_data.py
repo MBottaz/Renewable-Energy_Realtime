@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fetch_data.py — Popola energy-scenarios/data/ con dati reali da ENTSO-E.
+fetch_data.py — Popola data/ con dati reali da ENTSO-E.
 
 Utilizza il codice adattato da import_API.py (progetto esistente).
 Sostituisce i file JSON mock con dati reali.
@@ -9,12 +9,12 @@ Dipendenze:
     pip install requests pandas entsoe-py python-dotenv
 
 Config:
-    Legge config.json nella directory energy-scenarios/ (o root del progetto).
+    Legge config.json nella root del progetto.
     Oppure usa variabili d'ambiente ENTSOE_TOKEN.
 
 Output:
-    - energy-scenarios/data/capacity_{CC}.json
-    - energy-scenarios/data/generation_{CC}_{YYYY}.json
+    - data/capacity_{CC}.json
+    - data/generation_{CC}_{YYYY}.json
 """
 
 import json
@@ -89,7 +89,7 @@ def get_entsoe_key_from_env():
         return key
 
     # Prova .env nella root del progetto
-    env_path = Path(__file__).resolve().parents[1] / ".env"
+    env_path = Path(__file__).resolve().parent / ".env"
     if env_path.exists():
         try:
             from dotenv import load_dotenv
@@ -108,14 +108,12 @@ def get_entsoe_key_from_env():
 
 def parse_config():
     """
-    Legge config.json da energy-scenarios/.
+    Legge config.json dalla root del progetto.
     Restituisce { entsoe_token, countries, year }.
     """
-    # Cerca config.json in energy-scenarios/ e nella root
+    # Cerca config.json nella root del progetto
     paths = [
         Path(__file__).resolve().parent / "config.json",           # accanto a fetch_data.py
-        Path(__file__).resolve().parents[1] / "energy-scenarios" / "config.json",
-        Path(__file__).resolve().parents[1] / "config.json",       # root progetto
     ]
 
     config = {}
@@ -144,13 +142,37 @@ def parse_config():
 
 def process_multiindex_columns(df):
     """
-    Appiattisce colonne MultiIndex prendendo solo 'Actual Aggregated'.
-    Adattato da import_API.py.
+    Appiattisce colonne MultiIndex.
+    Prende 'Actual Aggregated' o 'Actual Consumption' (somma se entrambi presenti).
+    Se stesso nome colonna appare più volte (es. due 'Hydro Pumped Storage'),
+    somma i valori. Adattato da import_API.py.
     """
-    if df.columns.nlevels > 1:
-        if "Actual Aggregated" in df.columns.get_level_values(1):
-            df = df.xs("Actual Aggregated", level=1, axis=1)
-    return df
+    if df.columns.nlevels <= 1:
+        return df
+
+    level0 = df.columns.get_level_values(0)
+    level1 = df.columns.get_level_values(1)
+
+    # Raggruppa colonne per nome (livello 0)
+    result = {}
+    seen = set()
+    for i in range(len(df.columns)):
+        name = str(level0[i])
+        typ = str(level1[i])
+        if typ not in ("Actual Aggregated", "Actual Consumption"):
+            continue
+        series = df.iloc[:, i]
+        if name in result:
+            result[name] = result[name].add(series, fill_value=0)
+        else:
+            result[name] = series
+
+    if not result:
+        return df
+
+    out = pd.DataFrame(result)
+    out.index = df.index
+    return out
 
 
 def resample_hourly(series):
@@ -162,10 +184,70 @@ def resample_hourly(series):
     return series.resample("h").sum()
 
 
+# Mappa diretta da nomi colonna ENTSO-E a categorie semplificate
+# (usata per query_installed_generation_capacity che restituisce nomi leggibili)
+COLUMN_TO_SOURCE = {
+    "Solar": "Solar",
+    "Wind Onshore": "Wind Onshore",
+    "Wind Offshore": "Wind Offshore",
+    "Wind": "Wind Onshore",
+    "Hydro Run-of-river and poundage": "Hydro",
+    "Hydro Water Reservoir": "Hydro",
+    "Hydro Pumped Storage": "Hydro",
+    "Nuclear": "Nuclear",
+    "Fossil Gas": "Gas",
+    "Fossil Brown coal/Lignite": "Coal",
+    "Fossil Coal-derived gas": "Coal",
+    "Fossil Hard coal": "Coal",
+    "Fossil Oil": "Other",
+    "Fossil Oil shale": "Other",
+    "Fossil Peat": "Other",
+    "Biomass": "Other",
+    "Geothermal": "Other",
+    "Other renewable": "Other",
+    "Marine": "Other",
+    "Waste": "Other",
+    "Other": "Other",
+}
+
+# Mappa da nome colonna a codice PSR (per generazione che può usare nomi leggibili)
+NAME_TO_PSR = {
+    "Solar": "B16",
+    "Wind Onshore": "B19",
+    "Wind Offshore": "B18",
+    "Wind": "B19",
+    "Hydro Run-of-river and poundage": "B11",
+    "Hydro Water Reservoir": "B12",
+    "Hydro Pumped Storage": "B10",
+    "Nuclear": "B14",
+    "Fossil Gas": "B04",
+    "Gas": "B04",
+    "Fossil Hard coal": "B05",
+    "Fossil Brown coal/Lignite": "B02",
+    "Fossil Coal-derived gas": "B03",
+    "Fossil Oil": "B06",
+    "Fossil Peat": "B08",
+    "Biomass": "B01",
+    "Geothermal": "B09",
+    "Other renewable": "B15",
+    "Marine": "B13",
+    "Waste": "B17",
+    "Other": "B20",
+}
+
+
+def _find_psr_code(col_name):
+    """Riconverti nome colonna leggibile in codice PSR."""
+    col_str = str(col_name).strip()
+    if col_str.startswith("B") and col_str[1:].isdigit():
+        return col_str
+    return NAME_TO_PSR.get(col_str, col_str)
+
+
 def fetch_capacity(client, country_code, year):
     """
     Recupera capacità installata per un paese.
-    Adattato da query_installed_capacity() in import_API.py.
+    Usa mapping diretto COLUMN_TO_SOURCE (nomi colonna leggibili).
     """
     start = pd.Timestamp(f"{year}-01-01", tz="Europe/Rome")
     end = pd.Timestamp(f"{year}-12-31", tz="Europe/Rome")
@@ -182,22 +264,17 @@ def fetch_capacity(client, country_code, year):
         print(f"  Nessun dato capacità per {country_code}")
         return None
 
-    # Estrai riga più recente o somma
+    # Prende l'ultima riga (più recente)
     if isinstance(cap_df, pd.DataFrame):
-        # Prende l'ultima riga (più recente) o somma se multi-riga
-        if cap_df.shape[0] > 1:
-            cap_series = cap_df.iloc[-1]
-        else:
-            cap_series = cap_df.iloc[0]
+        cap_series = cap_df.iloc[-1]
     else:
         cap_series = cap_df
 
     # Mappa colonne ENTSO-E alle categorie semplificate
     sources = {}
     for col in cap_series.index:
-        # Cerca mapping: le colonne possono essere codici (es. B01) o nomi
-        psr_code = _find_psr_code(col)
-        mapped = ENTSOE_TO_SOURCE.get(psr_code)
+        col_str = str(col).strip()
+        mapped = COLUMN_TO_SOURCE.get(col_str)
         if mapped:
             val = float(cap_series[col]) if pd.notna(cap_series[col]) else 0
             sources[mapped] = sources.get(mapped, 0) + val
@@ -207,43 +284,16 @@ def fetch_capacity(client, country_code, year):
         sources.setdefault(cat, 0.0)
 
     return {
-        "country": country_code,
+        "country": country_code if len(country_code) == 2 else _cc_from_key(country_code),
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "sources": {k: round(v) for k, v in sources.items()},
     }
 
 
-def _find_psr_code(col_name):
-    """
-    Cerca di estrarre un codice PSR (B01..B20) dal nome colonna.
-    Gestisce sia colonne con codice puro sia nomi leggibili.
-    """
-    col_str = str(col_name).strip()
-    # Se è già un codice Bxx
-    if col_str.startswith("B") and col_str[1:].isdigit():
-        return col_str
-    # Mappa inversa approssimativa (per nomi colonna)
-    name_to_code = {
-        "Solar": "B16",
-        "Wind Onshore": "B19",
-        "Wind Offshore": "B18",
-        "Wind": "B19",
-        "Hydro": "B11",
-        "Hydro Run-of-river and poundage": "B11",
-        "Hydro Water Reservoir": "B12",
-        "Hydro Pumped Storage": "B10",
-        "Nuclear": "B14",
-        "Fossil Gas": "B04",
-        "Gas": "B04",
-        "Fossil Hard coal": "B05",
-        "Coal": "B05",
-        "Biomass": "B01",
-        "Geothermal": "B09",
-        "Other": "B20",
-        "Marine": "B13",
-        "Waste": "B17",
-    }
-    return name_to_code.get(col_str, col_str)
+def _cc_from_key(key):
+    """Riconverti ENTSO-E key in codice ISO a 2 lettere."""
+    rev = {v: k for k, v in COUNTRIES.items()}
+    return rev.get(key, key)
 
 
 def fetch_generation(client, country_code, year):
@@ -254,38 +304,40 @@ def fetch_generation(client, country_code, year):
     start = pd.Timestamp(f"{year}-01-01", tz="Europe/Rome")
     end = pd.Timestamp(f"{year + 1}-01-01", tz="Europe/Rome")
 
-    # Recupera generazione per ogni tipo PSR
-    psr_types = list(ENTSOE_TO_SOURCE.keys())
+    # Recupera generazione in un'unica chiamata (tutti i PSR insieme)
+    try:
+        gen_df = client.query_generation(
+            country_code, start=start, end=end, psr_type=None
+        )
+    except Exception as e:
+        print(f"  ERRORE generazione per {country_code}: {e}")
+        return None
+
+    if gen_df is None or gen_df.empty:
+        print(f"  Nessun dato generazione per {country_code}")
+        return None
+
+    # Appiattisce MultiIndex colonne e resample orario
+    gen_df = process_multiindex_columns(gen_df)
+    if isinstance(gen_df, pd.DataFrame):
+        gen_df = gen_df.resample("h").sum()
+    else:
+        gen_df = gen_df.resample("h").sum().to_frame()
+
+    # Mappa ogni colonna (nome leggibile) alla categoria semplificata
     all_data = {}
-
-    for psr in psr_types:
-        try:
-            df = client.query_generation(
-                country_code, start=start, end=end, psr_type=psr
-            )
-            if df is None or df.empty:
-                continue
-
-            df = process_multiindex_columns(df)
-
-            # Prende la prima colonna
-            if isinstance(df, pd.DataFrame):
-                series = df.iloc[:, 0]
-            else:
-                series = df
-
-            # Resample a oraria se necessario
-            if series.index.inferred_freq != "h":
-                series = resample_hourly(series)
-
-            mapped = ENTSOE_TO_SOURCE.get(psr, "Other")
+    for col in gen_df.columns:
+        col_str = str(col).strip()
+        mapped = COLUMN_TO_SOURCE.get(col_str)
+        if not mapped:
+            # Prova reverse lookup via _find_psr_code
+            psr_code = _find_psr_code(col_str)
+            mapped = ENTSOE_TO_SOURCE.get(psr_code, "Other")
+        if mapped:
+            series = gen_df[col]
             if mapped not in all_data:
                 all_data[mapped] = pd.Series(0.0, index=series.index)
             all_data[mapped] = all_data[mapped].add(series, fill_value=0)
-
-        except Exception as e:
-            # print(f"    {psr}: {e}")  # Silenzioso, molti PSR possono non avere dati
-            pass
 
     if not all_data:
         print(f"  Nessun dato generazione per {country_code}")
@@ -342,7 +394,7 @@ def fetch_generation(client, country_code, year):
         active_sources = CATEGORIES
 
     return {
-        "country": country_code,
+        "country": _cc_from_key(country_code),
         "year": year,
         "hours": len(common_index),
         "sources": active_sources,

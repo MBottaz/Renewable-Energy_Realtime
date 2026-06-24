@@ -20,6 +20,8 @@ const appState = {
   capacityScenario: {},
   /** @type {Object<string, number>} */
   capacityActual: {},
+  /** @type {Object<string, number>} */
+  capacityScaling: {},    // ratio scenario/actual per source (user modifications)
   /** @type {{ from: Date, to: Date }} */
   dateRange: null,
   /** @type {number} */
@@ -35,8 +37,8 @@ let weeklyChart = null;
 /* ─── Constants ─── */
 const RENEWABLE_SOURCES = ["Solar", "Wind Onshore", "Wind Offshore", "Hydro"];
 const DISPATCHABLE_SOURCES = ["Gas", "Coal", "Other"];
-const ALL_SOURCES = [...RENEWABLE_SOURCES, ...DISPATCHABLE_SOURCES];
 const NUCLEAR_SOURCES = ["Nuclear"];
+const ALL_SOURCES = [...RENEWABLE_SOURCES, ...NUCLEAR_SOURCES, ...DISPATCHABLE_SOURCES];
 
 const SOURCE_COLORS = {
   "Solar": "#f5c842",
@@ -90,21 +92,32 @@ async function loadAllData() {
 
 /* ─── Country Selector ─── */
 
-/** Render country toggle buttons. */
+let _countryInit = false;
+
+/** Render country toggle buttons (called once, then only updates selection state). */
 function renderCountrySelector() {
   const container = document.getElementById("country-selector");
-  container.textContent = "";
 
-  appState.countries.forEach((c) => {
-    const btn = document.createElement("button");
-    btn.className = "country-btn";
-    if (appState.selectedCountries.includes(c.code)) {
-      btn.classList.add("selected");
-    }
-    btn.textContent = c.name;
-    btn.addEventListener("click", () => toggleCountry(c.code));
-    container.appendChild(btn);
-  });
+  if (!_countryInit) {
+    container.textContent = "";
+    appState.countries.forEach((c) => {
+      const btn = document.createElement("button");
+      btn.className = "country-btn";
+      if (appState.selectedCountries.includes(c.code)) {
+        btn.classList.add("selected");
+      }
+      btn.textContent = c.name;
+      btn.dataset.code = c.code;
+      btn.addEventListener("click", () => toggleCountry(c.code));
+      container.appendChild(btn);
+    });
+    _countryInit = true;
+  } else {
+    // Just update selected class
+    container.querySelectorAll(".country-btn").forEach((btn) => {
+      btn.classList.toggle("selected", appState.selectedCountries.includes(btn.dataset.code));
+    });
+  }
 }
 
 /**
@@ -164,7 +177,21 @@ function recalculateScenario() {
   });
 
   appState.capacityActual = totalActual;
-  appState.capacityScenario = { ...totalScenario };
+
+  // Recalculate scenario values from actual capacities × scaling factors.
+  // Scaling factors persist across country selection changes.
+  for (const src of Object.keys(totalActual)) {
+    const scale = appState.capacityScaling[src] ?? 1;
+    appState.capacityScenario[src] = Math.round(totalActual[src] * scale);
+  }
+  // Remove sources no longer present
+  for (const src of Object.keys(appState.capacityScenario)) {
+    if (totalActual[src] === undefined) {
+      delete appState.capacityScenario[src];
+      delete appState.capacityScaling[src];
+    }
+  }
+
   appState.oldestUpdated = oldestUpdated;
 
   // Accumulate generation data (element-wise sum)
@@ -293,13 +320,16 @@ function renderCapacityTable() {
     const tdScenario = document.createElement("td");
     const input = document.createElement("input");
     input.type = "number";
-    input.value = (scenario[src] || actual[src]).toString();
+    input.value = (scenario[src] !== undefined ? scenario[src] : actual[src]).toString();
     input.min = 0;
     input.step = 100;
     input.addEventListener("input", () => {
       const val = parseFloat(input.value);
       if (!isNaN(val) && val >= 0) {
         appState.capacityScenario[src] = val;
+        // Store scaling factor for persistence across country changes
+        const actual = appState.capacityActual[src];
+        appState.capacityScaling[src] = actual > 0 ? val / actual : 1;
         onStateChange();
       }
     });
@@ -314,6 +344,7 @@ function renderCapacityTable() {
     resetBtn.title = `Ripristina ${actual[src].toLocaleString()} MW`;
     resetBtn.addEventListener("click", () => {
       appState.capacityScenario[src] = actual[src];
+      appState.capacityScaling[src] = 1;
       onStateChange();
     });
     tdReset.appendChild(resetBtn);
@@ -326,41 +357,37 @@ function renderCapacityTable() {
 /* ─── Date Controls ─── */
 
 /** Render date inputs and wire events. */
+let _dateControlsInitialized = false;
+
 function renderDateControls() {
   const fromEl = document.getElementById("date-from");
   const toEl = document.getElementById("date-to");
-
-  if (!appState.scaledData) return;
-
   const fmt = (d) => d.toISOString().slice(0, 10);
-  if (!fromEl.value && !toEl.value) {
+
+  if (!_dateControlsInitialized && appState.scaledData) {
     fromEl.value = fmt(appState.dateRange.from);
     toEl.value = fmt(appState.dateRange.to);
     fromEl.min = fmt(new Date(Date.UTC(2024, 0, 1)));
     fromEl.max = fmt(new Date(Date.UTC(2024, 11, 31)));
     toEl.min = fmt(new Date(Date.UTC(2024, 0, 1)));
     toEl.max = fmt(new Date(Date.UTC(2024, 11, 31)));
+
+    fromEl.addEventListener("change", () => {
+      appState.dateRange.from = new Date(fromEl.value + "T00:00:00Z");
+      renderKPI();
+      renderDurationCurve();
+      renderWeeklyChart();
+    });
+
+    toEl.addEventListener("change", () => {
+      appState.dateRange.to = new Date(toEl.value + "T23:00:00Z");
+      renderKPI();
+      renderDurationCurve();
+      renderWeeklyChart();
+    });
+
+    _dateControlsInitialized = true;
   }
-
-  // Remove old listeners by cloning
-  const newFrom = fromEl.cloneNode(true);
-  const newTo = toEl.cloneNode(true);
-  fromEl.parentNode.replaceChild(newFrom, fromEl);
-  toEl.parentNode.replaceChild(newTo, toEl);
-
-  newFrom.addEventListener("change", () => {
-    appState.dateRange.from = new Date(newFrom.value + "T00:00:00Z");
-    renderKPI();
-    renderDurationCurve();
-    renderWeeklyChart();
-  });
-
-  newTo.addEventListener("change", () => {
-    appState.dateRange.to = new Date(newTo.value + "T23:00:00Z");
-    renderKPI();
-    renderDurationCurve();
-    renderWeeklyChart();
-  });
 
   // Week slider
   const slider = document.getElementById("week-slider");
@@ -543,8 +570,8 @@ function renderWeeklyChart() {
     labels.push(d.toLocaleDateString("it", { weekday: "short", hour: "2-digit" }));
   }
 
-  // Generation sources for stacking (renewables + dispatchable, no Nuclear in stacked area)
-  const stackSources = [...RENEWABLE_SOURCES, ...DISPATCHABLE_SOURCES];
+  // Generation sources for stacking: renewables → nuclear → dispatchable
+  const stackSources = [...RENEWABLE_SOURCES, ...NUCLEAR_SOURCES, ...DISPATCHABLE_SOURCES];
   const loadData = [];
   for (let i = 0; i < nHours; i++) {
     loadData.push((sd.load[startHour + i] || 0) / 1000); // Convert to GW

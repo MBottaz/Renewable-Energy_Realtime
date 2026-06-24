@@ -3,66 +3,69 @@
 Sito web **statico** (GitHub Pages-ready) per visualizzare e simulare scenari
 di mix energetico orario per uno o più paesi europei.
 
-**Dati**: [ENTSO-E Transparency Platform](https://transparency.entsoe.eu/)<br>
+**Dati**: [ENTSO-E Transparency Platform](https://transparency.entsoe.eu/) (dati reali)<br>
 **Stack**: HTML + CSS + JavaScript vanilla + [Chart.js](https://www.chartjs.org/) (CDN)<br>
-**Pre-processing**: script Python `energy-scenarios/fetch_data.py`
+**Pre-processing**: script Python `fetch_data.py`
 
 ---
 
 ## Funzionalità
 
-- **Selezione multi-paese** — scegli e combina paesi (IT, DE, FR, ES, ...)
-- **Tabella capacità installata** — modifica la potenza per fonte e scala la generazione
+- **Selezione multi-paese** — scegli e combina paesi (IT, DE, FR, ES, PL, NL, BE, AT, CH)
+- **Tabella capacità installata** — modifica la potenza per fonte e scala la generazione oraria
 - **KPI** — ore surplus rinnovabile, ore fissate dal gas, quota rinnovabile %
 - **Duration curve** — surplus rinnovabile ordinato decrescente
-- **Grafico settimanale** — stacked area per fonte + linea carico
+- **Grafico settimanale** — stacked area per fonte (rinnovabili + nucleare + fossili) + linea carico
 
 ## Struttura
 
 ```
-energy-scenarios/
+.
 ├── index.html              ← pagina principale
 ├── style.css               ← stili
 ├── app.js                  ← logica frontend (Chart.js)
-├── config.json             ← configurazione API (da editare)
-├── fetch_data.py           ← script Python per scaricare dati reali
-└── data/
-    ├── countries.json      ← elenco paesi
-    ├── capacity_IT.json    ← capacità installata (mock o reali)
-    ├── capacity_DE.json
-    ├── ...
-    ├── generation_IT_2024.json  ← generazione oraria (mock o reali)
-    └── generation_DE_2024.json
+├── config.json             ← configurazione paesi/anno
+├── fetch_data.py           ← script Python per scaricare dati reali da ENTSO-E
+├── data/
+│   ├── countries.json      ← elenco paesi supportati
+│   ├── capacity_IT.json    ← capacità installata (da ENTSO-E)
+│   ├── capacity_DE.json
+│   ├── ...
+│   ├── generation_IT_2024.json  ← generazione oraria (da ENTSO-E)
+│   └── generation_DE_2024.json
+├── sources.md              ← fonti e assunzioni
+├── pyproject.toml          ← configurazione progetto Python
+└── README.md
 ```
 
 ---
 
 ## Come usare
 
-### 1. Apri la pagina
-
-Con i dati mock già pronti:
+### 1. Scarica i dati
 
 ```bash
-cd energy-scenarios
+pip install entsoe-py pandas python-dotenv requests
+```
+
+Configura il token ENTSO-E in `.env` come `ENTSOe_KEY=il_tuo_token` o come
+variabile d'ambiente `ENTSOE_TOKEN`, poi:
+
+```bash
+python fetch_data.py
+```
+
+I file JSON nella cartella `data/` verranno popolati con dati reali.
+
+### 2. Avvia la pagina
+
+```bash
 python -m http.server 8000
 ```
 
 Apri `http://localhost:8000` nel browser.
 
-### 2. Scarica dati reali (opzionale)
-
-1. Ottieni un token API da [ENTSO-E Transparency Platform](https://transparency.entsoe.eu/)
-2. Configuralo in `config.json` o come variabile d'ambiente (`ENTSOE_TOKEN`)
-3. Esegui lo script:
-
-```bash
-cd energy-scenarios
-pip install entsoe-py pandas python-dotenv requests
-python fetch_data.py
-```
-
-I file JSON nella cartella `data/` verranno sovrascritti con dati reali.
+Il sito è completamente statico e hostabile su GitHub Pages senza backend.
 
 ---
 
@@ -73,7 +76,7 @@ I file JSON nella cartella `data/` verranno sovrascritti con dati reali.
 ```json
 {
   "country": "IT",
-  "updated": "2024-11-01",
+  "updated": "2024-06-01",
   "sources": {
     "Solar": 32000,
     "Wind Onshore": 11800,
@@ -93,16 +96,13 @@ I file JSON nella cartella `data/` verranno sovrascritti con dati reali.
 {
   "country": "IT",
   "year": 2024,
-  "hours": 8760,
+  "hours": 8784,
   "sources": ["Solar","Wind Onshore","Hydro","Gas","Coal","Other"],
-  "load": [array di 8760 float in MW],
+  "load": [array di float in MW],
   "generation": {
-    "Solar": [8760 float],
-    "Wind Onshore": [8760 float],
-    "Hydro": [8760 float],
-    "Gas": [8760 float],
-    "Coal": [8760 float],
-    "Other": [8760 float]
+    "Solar": [array orario in MW],
+    "Wind Onshore": [array orario in MW],
+    ...
   }
 }
 ```
@@ -111,19 +111,26 @@ I file JSON nella cartella `data/` verranno sovrascritti con dati reali.
 
 ## Sviluppo
 
-### Generazione dati mock
+### Aggiornamento dati
+
+Modifica `config.json` per cambiare paesi o anno, poi:
 
 ```bash
-python generate_mock_data.py
+python fetch_data.py
 ```
 
-Genera 8760 ore di dati sintetici realistici per tutti i 9 paesi.
+### GitHub Pages
+
+Il sito è pronto per GitHub Pages. Basta pushare il repository e abilitare
+GitHub Pages dal branch `main`, cartella root `/`.
 
 ---
 
 ## Cronologia
 
 | Versione | Descrizione |
-|----------|-------------|
-| v0.1     | Script Python per analisi energetica Italia (import_API.py, EnergyMatch.py) |
-| **v0.2** | **Riscrittura completa**: sito statico web, multi-paese, Chart.js |
+|----------|------------|
+| v0.1     | Script Python per analisi energetica Italia (legacy) |
+| v0.2     | Riscrittura completa: sito statico web, multi-paese, Chart.js |
+| v0.3     | Refactoring: codice spostato nella directory principale, rimossi script legacy |
+| **v0.4** | **Dati reali ENTSO-E**: rimosso mock generator, fetch_data.py rifattorizzato |
