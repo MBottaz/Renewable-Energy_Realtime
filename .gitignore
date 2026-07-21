@@ -1,5 +1,7 @@
 data/*
+!data/.gitkeep
 *.csv
+!tests/fixtures/*.csv
 *.json
 net-zero-e-conomy-2050-report-eng-enel-2022090311.pdf
 Alveare
