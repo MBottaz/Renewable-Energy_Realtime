@@ -9,4 +9,5 @@ Alveare
 .env
 .ruff_cache
 __pycache__
+scratch.py
 .env

@@ -21,3 +21,6 @@ src/renewable_energy_realtime.egg-info/dependency_links.txt
 src/renewable_energy_realtime.egg-info/entry_points.txt
 src/renewable_energy_realtime.egg-info/requires.txt
 src/renewable_energy_realtime.egg-info/top_level.txt
+tests/test_csv_reader.py
+tests/test_dispatch.py
+tests/test_engine.py
