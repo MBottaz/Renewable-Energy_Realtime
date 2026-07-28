@@ -1,2 +1,0 @@
-[console_scripts]
-energy-match = energy_match.cli:main
