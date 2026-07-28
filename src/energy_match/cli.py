@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from energy_match.config import SOURCE_CLASSIFICATIONS
+from energy_match.config import SOURCE_CLASSIFICATIONS, FOSSIL_SOURCES
 from energy_match.engine import match
 from energy_match.models import SourceMeta
 from energy_match.readers import CsvReader, EntsoeReader
@@ -191,9 +191,6 @@ def _run_fetch(args: argparse.Namespace) -> None:
         )
         sys.exit(1)
 
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
     reader = EntsoeReader(
         api_key=api_key,
         country_code=args.country,
@@ -202,28 +199,116 @@ def _run_fetch(args: argparse.Namespace) -> None:
     )
     ts = reader.read()
 
-    # Save demand
-    demand_df = pd.DataFrame({
-        "timestamp": ts.timestamps,
-        "demand_kw": ts.demand.values,
-    })
-    demand_df.to_csv(output_dir / "demand.csv", index=False)
-
-    # Save each production source
+    # Build a single wide DataFrame
+    df = pd.DataFrame({"timestamp": ts.timestamps, "demand_kw": ts.demand.values})
     for name, series in ts.productions.items():
         safe_name = name.lower().replace(" ", "_").replace("-", "_")
-        pdf = pd.DataFrame({
-            "timestamp": ts.timestamps,
-            f"{safe_name}_kw": series.values,
-        })
-        pdf.to_csv(output_dir / f"{safe_name}.csv", index=False)
+        df[f"{safe_name}_kw"] = series.values
+
+    df.to_csv(args.output, index=False)
 
     print(
         f"Fetched ENTSO-E data for {args.country} "
         f"({ts.timestamps[0]:%Y-%m-%d %H:%M} – {ts.timestamps[-1]:%Y-%m-%d %H:%M}) "
-        f"→ {output_dir}/"
+        f"→ {args.output}"
     )
 
+
+# ---------------------------------------------------------------------------
+# drop-fossil subcommand
+# ---------------------------------------------------------------------------
+
+
+def _run_drop_fossil(args: argparse.Namespace) -> None:
+    """Read a wide CSV, drop fossil-intensive columns, and write the cleaned CSV."""
+    df = pd.read_csv(args.input)
+
+    fossil_stems: set[str] = set()
+    for name in FOSSIL_SOURCES:
+        stem = name.lower().replace(" ", "_").replace("-", "_")
+        fossil_stems.add(stem)
+
+    to_drop: list[str] = []
+    for col in df.columns:
+        if col in ("timestamp", "demand_kw"):
+            continue
+        if col.endswith("_kw"):
+            stem = col.removesuffix("_kw")
+            if stem in fossil_stems:
+                to_drop.append(col)
+
+    df = df.drop(columns=to_drop)
+    df.to_csv(args.output, index=False)
+    print(f"Dropped {len(to_drop)} fossil column(s): {', '.join(to_drop)}")
+
+
+# ---------------------------------------------------------------------------
+# scale subcommand
+# ---------------------------------------------------------------------------
+
+
+def _run_scale(args: argparse.Namespace) -> None:
+    """Read a wide CSV and scale production columns by installed-to-desired capacity ratio."""
+    api_key = os.environ.get("ENTSOE_KEY")
+    if not api_key:
+        print(
+            "error: ENTSOE_KEY environment variable is not set.\n"
+            "  Set it to your ENTSO-E Transparency Platform REST API key.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # Read input CSV
+    df = pd.read_csv(args.input)
+
+    # Read desired capacities
+    with open(args.capacities) as f:
+        desired: dict[str, float] = json.load(f)
+
+    # Fetch installed capacity from ENTSO-E
+    reader = EntsoeReader(
+        api_key=api_key,
+        country_code=args.country,
+        start=args.start,
+        end=args.end,
+    )
+    capacity_df = reader.read_installed_capacity()
+
+    # Compute mean actual capacity per source
+    actual: dict[str, float] = {}
+    for col in capacity_df.columns:
+        try:
+            val = capacity_df[col].mean()
+            if pd.notna(val):
+                actual[col] = float(val)
+        except (TypeError, ValueError):
+            continue
+
+    # Helper to convert canonical name to CSV column stem
+    def canon_to_stem(name: str) -> str:
+        return name.lower().replace(" ", "_").replace("-", "_")
+
+    # Scale matching columns
+    for name, desired_cap in desired.items():
+        desired_cap = float(desired_cap)
+        stem = canon_to_stem(name)
+        col = f"{stem}_kw"
+
+        if col not in df.columns:
+            print(f"Warning: column {col!r} not found in CSV — skipping {name}")
+            continue
+
+        actual_cap = actual.get(name, 0.0)
+        if actual_cap <= 0:
+            print(f"Warning: no installed capacity data for {name} (actual={actual_cap}) — skipping")
+            continue
+
+        factor = actual_cap / desired_cap
+        df[col] = df[col] * factor
+        print(f"Scaled {name}: actual={actual_cap:.0f}MW, desired={desired_cap:.0f}MW, factor={factor:.3f}")
+
+    df.to_csv(args.output, index=False)
+    print(f"Scaled CSV written to {args.output}")
 
 # ---------------------------------------------------------------------------
 # Entry point
@@ -306,7 +391,7 @@ def main() -> None:
 
     # ── fetch-entsoe ─────────────────────────────────────────────────────
     fetch_parser = subparsers.add_parser(
-        "fetch-entsoe",
+        "fetch",
         help="Fetch data from ENTSO-E Transparency Platform",
         description=(
             "Query the ENTSO-E Transparency Platform for load and generation "
@@ -332,18 +417,92 @@ def main() -> None:
         help="End date (e.g. 2024-12-31)",
     )
     fetch_parser.add_argument(
-        "--output-dir",
+        "--output",
         type=str,
-        default="./output",
-        help="Output directory for fetched CSVs (default: ./output)",
+        required=True,
+        help="Output CSV file path",
+    )
+
+    # ── drop-fossil ──────────────────────────────────────────────────────
+    drop_parser = subparsers.add_parser(
+        "drop-fossil",
+        help="Drop fossil-intensive columns from a wide CSV",
+        description=(
+            "Read a wide CSV (timestamp, demand_kw, {source}_kw columns), "
+            "identify and remove columns whose source name matches a known "
+            "fossil source, and write the cleaned CSV."
+        ),
+    )
+    drop_parser.add_argument(
+        "--input",
+        type=str,
+        required=True,
+        help="Input CSV file path",
+    )
+    drop_parser.add_argument(
+        "--output",
+        type=str,
+        required=True,
+        help="Output CSV file path",
+    )
+
+    # ── scale ────────────────────────────────────────────────────────────
+    scale_parser = subparsers.add_parser(
+        "scale",
+        help="Scale production columns by installed-to-desired capacity ratio",
+        description=(
+            "Read a wide CSV, fetch actual installed capacity from ENTSO-E, "
+            "and scale each production column by the ratio of actual to desired "
+            "capacity."
+        ),
+    )
+    scale_parser.add_argument(
+        "--input",
+        type=str,
+        required=True,
+        help="Input CSV file path",
+    )
+    scale_parser.add_argument(
+        "--country",
+        type=str,
+        default="IT",
+        help="Country code (default: IT)",
+    )
+    scale_parser.add_argument(
+        "--start",
+        type=str,
+        required=True,
+        help="Start date (e.g. 2024-01-01)",
+    )
+    scale_parser.add_argument(
+        "--end",
+        type=str,
+        required=True,
+        help="End date (e.g. 2024-12-31)",
+    )
+    scale_parser.add_argument(
+        "--capacities",
+        type=str,
+        required=True,
+        help="JSON file mapping source names to desired MW",
+    )
+    scale_parser.add_argument(
+        "--output",
+        type=str,
+        required=True,
+        help="Output CSV file path",
     )
 
     args = parser.parse_args()
 
     if args.command == "match":
         _run_match(args)
-    elif args.command == "fetch-entsoe":
+    elif args.command == "fetch":
         _run_fetch(args)
+    elif args.command == "drop-fossil":
+        _run_drop_fossil(args)
+    elif args.command == "scale":
+        _run_scale(args)
     else:
         parser.print_help()
         sys.exit(1)

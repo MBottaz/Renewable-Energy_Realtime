@@ -12,10 +12,13 @@ from energy_match.models import SourceMeta
 # ---------------------------------------------------------------------------
 
 FOSSIL_SOURCES: set[str] = {
+    "Fossil Brown coal/Lignite",
     "Fossil Coal-derived gas",
     "Fossil Gas",
     "Fossil Hard coal",
     "Fossil Oil",
+    "Fossil Oil shale",
+    "Fossil Peat",
 }
 
 # ---------------------------------------------------------------------------
