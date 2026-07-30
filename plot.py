@@ -32,6 +32,7 @@ PLOT_COLORS: dict[str, str] = {
     "Wind Offshore": "#9467BD",
     "Wind Onshore": "#2CA02C",
     "Other": "#7F7F7F",
+    "Energy storage": "#7F7F7F",
 }
 
 

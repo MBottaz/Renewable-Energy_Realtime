@@ -47,6 +47,7 @@ PSR_NAME: dict[str, str] = {
     "B22": "DC Link",
     "B23": "Substation",
     "B24": "Transformer",
+    "B25": "Energy storage",
 }
 
 # PSR types to fetch (generation sources only, no load/links)
@@ -60,6 +61,7 @@ DEFAULT_PSR_TYPES: list[str] = [
     "B16",  # Solar
     "B18",  # Wind Offshore
     "B19",  # Wind Onshore
+    "B25", # Energy storage
 ]
 
 
@@ -86,9 +88,78 @@ def _process_multiindex(df: pd.DataFrame) -> pd.DataFrame:
             pass
     return df
 
+def fetch_production(
+    country: str,
+    start: pd.Timestamp,
+    end: pd.Timestamp,
+    api_key: str | None = None,
+) -> pd.DataFrame:
+    """Fetch generation and load (demand) data from ENTSO-E Transparency Platform.
+
+    Parameters
+    ----------
+    country : str
+        Two-letter country code (e.g. ``"IT"``, ``"DE"``).
+    start : pd.Timestamp
+        Start of the query range (UTC-aware).
+    end : pd.Timestamp
+        End of the query range (UTC-aware).
+    api_key : str | None
+        ENTSO-E API key.  If *None*, loaded from the ``ENTSOE_KEY`` environment
+        variable via ``load_dotenv``.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns ``timestamp``, ``demand_kw``, and one column per
+        production source (from :data:`DEFAULT_PSR_TYPES` mapped through
+        :data:`PSR_NAME`).
+
+    Raises
+    ------
+    ValueError
+        If no API key is available.
+    """
+    if api_key is None:
+        load_dotenv()
+        api_key = os.environ.get("ENTSOE_KEY")
+    if not api_key:
+        raise ValueError("ENTSOE_KEY not found. Set it in .env or export it.")
+
+    client = EntsoePandasClient(api_key=api_key)
+
+    # 1. Load (demand)
+    print(f"Fetching load for {country} \u2026")
+    load_raw = client.query_load(country, start=start, end=end)
+    load_series = _as_utc_series(load_raw).astype("float64")
+    timestamps = load_series.index
+
+    # 2. Generation \u2014 single call for all PSR types
+    productions: dict[str, pd.Series] = {}
+    print(f"  Fetching generation for {country} \u2026")
+    try:
+        raw = client.query_generation(country, start=start, end=end)
+        raw = _process_multiindex(raw)
+        for psr in DEFAULT_PSR_TYPES:
+            name = PSR_NAME.get(psr, psr)
+            if name not in raw.columns:
+                print(f"  ({name} not in response)")
+                continue
+            series = _as_utc_series(raw[name]).astype("float64")
+            series = series.reindex(timestamps).fillna(0.0)
+            productions[name] = series
+    except Exception as exc:
+        print(f"  (generation unavailable: {exc})")
+
+    # 3. Build wide DataFrame
+    df = pd.DataFrame({"timestamp": timestamps, "demand_kw": load_series.values})
+    for name, series in productions.items():
+        df[name] = series.values
+
+    return df
+
 
 # ── Main ─────────────────────────────────────────────────────────────────
-
 
 def main() -> None:
     load_dotenv()
@@ -115,35 +186,7 @@ def main() -> None:
         else end - pd.Timedelta(days=args.days)
     )
 
-
-    client = EntsoePandasClient(api_key=api_key)
-
-    # 1. Load (demand)
-    print(f"Fetching load for {args.country} …")
-    load_raw = client.query_load(args.country, start=start, end=end)
-    load_series = _as_utc_series(load_raw).astype("float64")
-    timestamps = load_series.index
-
-    # 2. Generation per PSR type
-    productions: dict[str, pd.Series] = {}
-    for psr in DEFAULT_PSR_TYPES:
-        name = PSR_NAME.get(psr, psr)
-        print(f"  Fetching {name} …")
-        try:
-            raw = client.query_generation(
-                args.country, start=start, end=end, psr_type=psr
-            )
-            raw = _process_multiindex(raw)
-            series = _as_utc_series(raw).astype("float64")
-            series = series.reindex(timestamps).fillna(0.0)
-            productions[name] = series
-        except Exception as exc:
-            print(f"  ({name} unavailable: {exc})")
-
-    # 3. Build wide DataFrame
-    df = pd.DataFrame({"timestamp": timestamps, "demand_kw": load_series.values})
-    for name, series in productions.items():
-        df[name] = series.values
+    df = fetch_production(args.country, start, end, api_key)
 
     # 4. Write CSV
     output = args.output or f"entsoe_{args.country}_{start:%Y%m%d}_{end:%Y%m%d}.csv"

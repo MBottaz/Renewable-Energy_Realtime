@@ -55,6 +55,11 @@ SOURCE_CLASSIFICATIONS: dict[str, SourceMeta] = {
         "storage",
         roundtrip_efficiency=0.85,
     ),
+    "Energy storage": SourceMeta(
+        "Energy storage",
+        "storage",
+        roundtrip_efficiency=0.80,
+    ),
     # --- Flexible renewables ---
     "Hydro Water Reservoir": SourceMeta("Hydro Water Reservoir", "flexible"),
     "Other renewable": SourceMeta("Other renewable", "flexible"),
@@ -86,6 +91,7 @@ DISPATCH_ORDER: list[str] = [
     # Flexible
     "Hydro Water Reservoir",
     "Other renewable",
+    "Energy storage",
     "Fossil Brown coal/Lignite",
     "Fossil Coal-derived gas",
     "Fossil Gas",
