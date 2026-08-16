@@ -26,20 +26,27 @@
         End Date
         <input type="date" id="date-end">
       </label>
-      <button id="plot-btn">Plot</button>
+      <p class="controls-help">Charts update automatically. Dates are interpreted in UTC.</p>
     </section>
     <div id="status"></div>
 
     <section id="chart-area">
-      <div class="card">
-        <div id="chart-caption"></div>
-        <canvas id="chart"></canvas>
+      <div class="card chart-card">
+        <h2>Hourly renewable production</h2>
+        <div id="chart-caption" class="chart-caption"></div>
+        <div class="chart-container production-chart-container">
+          <canvas id="chart"></canvas>
+        </div>
       </div>
-    </section>
 
-    <section id="capacity-panel" class="card">
-      <h2>Installed Capacity</h2>
-      <div id="capacity-grid"></div>
+      <div class="card chart-card">
+        <h2>Installed capacity</h2>
+        <div id="capacity-caption" class="chart-caption"></div>
+        <div class="chart-container capacity-chart-container">
+          <canvas id="capacity-chart"></canvas>
+        </div>
+        <div id="capacity-grid"></div>
+      </div>
     </section>
   </main>
 

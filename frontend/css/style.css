@@ -31,7 +31,7 @@ header p {
   border-radius: 8px;
   padding: 20px;
   margin: 16px auto;
-  max-width: 900px;
+  max-width: 1100px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -61,21 +61,13 @@ header p {
   font-family: inherit;
 }
 
-#plot-btn {
-  padding: 8px 20px;
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.9em;
-  font-family: inherit;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s;
+.controls-help {
+  flex-basis: 100%;
+  margin: 0;
+  color: #666;
+  font-size: 0.8em;
+  text-align: center;
 }
-
-#plot-btn:hover { background: #1d4ed8; }
-#plot-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 
 #status {
   font-size: 0.85em;
@@ -85,17 +77,46 @@ header p {
   margin-top: 8px;
 }
 
-#capacity-panel {
+#status.error { color: #dc2626; }
+
+#chart-area {
+  max-width: 1100px;
+  margin: 16px auto;
+}
+
+.chart-card { max-width: none; }
+
+.chart-card h2 {
+  margin: 0 0 4px;
+  color: #555;
+  font-size: 1.1em;
+}
+
+.chart-caption {
+  min-height: 1.3em;
+  margin-bottom: 10px;
+  color: #666;
+  font-size: 0.85em;
+  text-align: center;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+.production-chart-container { height: 450px; }
+
+.capacity-chart-container {
+  max-width: 600px;
+  height: 420px;
+  margin: 0 auto 18px;
+}
+
+#capacity-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 10px 24px;
-}
-
-#capacity-panel h2 {
-  grid-column: 1 / -1;
-  margin: 0 0 4px;
-  font-size: 1.1em;
-  color: #555;
 }
 
 .cap-row {
@@ -105,9 +126,10 @@ header p {
   gap: 8px;
   font-size: 0.85em;
   padding: 6px 10px;
+  border: 1px solid #eee;
+  border-left: 4px solid #9ca3af;
   border-radius: 6px;
   background: #fafbfc;
-  border: 1px solid #eee;
 }
 
 .cap-name {
@@ -129,35 +151,18 @@ header p {
 }
 
 .cap-total .cap-name,
-.cap-total .cap-value {
-  color: #fff;
-}
-
-#chart-caption {
-  text-align: center;
-  font-size: 0.9em;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-#chart-area {
-  max-width: 100%;
-  margin: 16px auto;
-}
-
-#chart-area .card {
-  max-width: none;
-}
-
-#chart {
-  width: 100%;
-  height: 450px;
-}
+.cap-total .cap-value { color: #fff; }
 
 footer {
   text-align: center;
   color: #999;
   font-size: 0.85em;
   padding: 20px;
+}
+
+@media (max-width: 640px) {
+  body { padding: 10px; }
+  .card { padding: 14px; }
+  .production-chart-container { height: 360px; }
+  .capacity-chart-container { height: 350px; }
 }

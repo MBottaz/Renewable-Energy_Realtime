@@ -20,7 +20,7 @@ scripts/                  # Thin runnable CLIs (python scripts/<name>.py)
   build.py                # Offline build: data/ → frontend/data/*.json + js/data.js
   validate.py             # Offline end-to-end smoke check
 frontend/                 # Static site (GitHub Pages friendly)
-  index.html              # Page skeleton (controls + chart + capacity panel)
+  index.html              # Page skeleton (filters + production/capacity charts)
   css/style.css
   js/app.js               # All frontend logic (plain JS, no build step)
   js/chart.umd.js         # Vendored Chart.js v4 — no CDN/network needed
@@ -75,7 +75,7 @@ Run any script from the project root (`python scripts/…` or `uv run python scr
 
 ```
 python scripts/fetch.py --country IT --start 2025-01-01 --end 2025-01-08
-python scripts/fetch.py --country IT --days 14
+python scripts/fetch.py --country IT --start 2025-08-01 --end 2026-07-31
 ```
 
 Writes `data/entsoe_<CC>_<start>_<end>.csv`.
@@ -108,7 +108,7 @@ python scripts/plot.py output/ --output output/chart.png --show-storage
 Complete offline workflow:
 
 ```
-python scripts/fetch.py --country IT --days 14    # 1. download 15-min production CSV → data/
+python scripts/fetch.py --country IT --start 2025-08-01 --end 2026-07-31  # 1. download one year
 python scripts/capacity.py IT                      # 2. installed capacity → data/capacity_IT.json
 python scripts/build.py                            # 3. regenerate frontend assets
 # 4. open frontend/index.html (double-click — works via file://, no server)
@@ -150,11 +150,15 @@ python -m http.server -d frontend
 `demand`, per-source production series, and installed capacity). On load,
 `js/app.js` populates the country selector from the data, sets the date inputs
 to the full timestamp span, renders the installed-capacity panel, and plots the
-default range. Clicking **Plot** re-aggregates the selected range: 15-minute
-ENTSO-E rows are bucketed by hour (UTC) and summed, and the ×0.25 h conversion
-to hourly energy (MWh) is applied at display time. The result is drawn with
-Chart.js as stacked production areas plus a demand line (on its own stack, so
-it isn't added on top of the areas).
+full available range by default. You can select any covered period, including a
+full year such as `01/08/2025` to `31/07/2026`. Changing the country or either date immediately re-aggregates the selected
+range: 15-minute ENTSO-E rows are bucketed by hour (UTC) and summed, and the
+×0.25 h conversion to hourly energy (MWh) is applied at display time. The
+production result is drawn with Chart.js as stacked production areas plus a
+demand line (on its own stack, so it isn't added on top of the areas). Installed
+capacity is shown as a pie chart and a complete value list, including zero-value
+technologies. The selected country and date range are persisted in the URL when
+the browser allows history updates.
 
 The dispatch simulation is **not** part of the frontend — it runs offline in
 the Python engine (`scripts/match.py` → `output/`), and the frontend only

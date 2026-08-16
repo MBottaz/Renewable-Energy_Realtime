@@ -4,7 +4,7 @@
 Usage:
     python scripts/fetch.py
     python scripts/fetch.py --country IT --start 2026-07-01 --end 2026-07-28
-    python scripts/fetch.py --country DE --days 14
+    python scripts/fetch.py --country DE --days 365
 
 Output columns: timestamp, demand_kw, <source name>, …
 """
@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pandas as pd  # noqa: E402
 
-from core.config import DATA_DIR  # noqa: E402
+from core.config import DATA_DIR, DEFAULT_INTERVAL_DAYS  # noqa: E402
 from core.entsoe import fetch_production  # noqa: E402
 
 
@@ -29,7 +29,12 @@ def main() -> None:
     parser.add_argument("--country", default="IT", help="Country code (default IT)")
     parser.add_argument("--start", type=str, help="Start date YYYY-MM-DD")
     parser.add_argument("--end", type=str, help="End date YYYY-MM-DD")
-    parser.add_argument("--days", type=int, default=7, help="Days to fetch (default 7)")
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=DEFAULT_INTERVAL_DAYS,
+        help=f"Days to fetch (default {DEFAULT_INTERVAL_DAYS})"
+    )
     parser.add_argument("--output", type=str, help="Output CSV path")
     args = parser.parse_args()
 

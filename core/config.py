@@ -18,8 +18,9 @@ FRONTEND_DATA_DIR = FRONTEND_DIR / "data"     # legacy static assets dir (commit
 FRONTEND_JS_DIR = FRONTEND_DIR / "js"         # vendored libs + generated data bundle
 
 # ── Frontend export ─────────────────────────────────────────────────────
-# Interval (in days) to pre-select by default in the frontend.
-DEFAULT_INTERVAL_DAYS = 7
+# Default data window requested by the fetch CLI (one calendar year).
+# The frontend can display any range covered by the bundled data.
+DEFAULT_INTERVAL_DAYS = 365
 COUNTRIES: list[dict[str, str]] = [
     {"code": "IT", "name": "Italia"},
 ]
@@ -153,16 +154,29 @@ DISPATCH_ORDER: list[str] = [
 ]
 
 # ── Plot colours per source ─────────────────────────────────────────────
+# Related technologies deliberately share colour families so charts are easy
+# to scan: hydro=blue, solar=yellow, wind=green, fossil=grey, storage=red.
+# Orange is intentionally reserved for non-technology UI elements.
 PLOT_COLORS: dict[str, str] = {
-    "Biomass": "#8C564B",
-    "Geothermal": "#D62728",
-    "Hydro Pumped Storage": "#BCBD22",
-    "Hydro Run-of-river and poundage": "#1F77B4",
-    "Hydro Water Reservoir": "#17BECF",
-    "Other renewable": "#E377C2",
-    "Solar": "#FFBF00",
-    "Wind Offshore": "#9467BD",
-    "Wind Onshore": "#2CA02C",
-    "Other": "#7F7F7F",
-    "Energy storage": "#7F7F7F",
+    "Biomass": "#795548",
+    "Geothermal": "#7E57C2",
+    "Hydro Pumped Storage": "#1565C0",
+    "Hydro Run-of-river and poundage": "#42A5F5",
+    "Hydro Water Reservoir": "#0D47A1",
+    "Other renewable": "#26A69A",
+    "Solar": "#F4C430",
+    "Wind Offshore": "#2E7D32",
+    "Wind Onshore": "#66BB6A",
+    "Energy storage": "#D32F2F",
+    "Fossil Brown coal/Lignite": "#374151",
+    "Fossil Coal-derived gas": "#4B5563",
+    "Fossil Gas": "#6B7280",
+    "Fossil Hard coal": "#52525B",
+    "Fossil Oil": "#71717A",
+    "Fossil Oil shale": "#9CA3AF",
+    "Fossil Peat": "#A1A1AA",
+    "Marine": "#00838F",
+    "Nuclear": "#263238",
+    "Waste": "#8D6E63",
+    "Other": "#94A3B8",
 }
