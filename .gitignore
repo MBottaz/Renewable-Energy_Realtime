@@ -1,7 +1,16 @@
 data/*
 !data/.gitkeep
+
+output/
+results/
+*.png
+
 *.csv
+!frontend/data/*.csv
+
 *.json
+!frontend/data/*.json
+
 net-zero-e-conomy-2050-report-eng-enel-2022090311.pdf
 Alveare
 .venv
@@ -9,5 +18,3 @@ Alveare
 .ruff_cache
 __pycache__
 scratch.py
-results/
-*.png
