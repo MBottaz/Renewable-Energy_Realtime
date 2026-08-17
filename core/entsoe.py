@@ -1,6 +1,8 @@
-"""ENSTO-E Transparency Platform data access layer.
+"""ENTSO-E production data access layer.
 
-Provides ``fetch_production()`` and ``query_installed_capacity()``.
+Provides ``fetch_production()``. Installed capacity is maintained separately in
+``core.capacity`` because the Italian ENTSO-E capacity values are unreliable.
+``query_installed_capacity()`` remains as a compatibility wrapper.
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from entsoe import EntsoePandasClient
 
+from core.capacity import manual_installed_capacity
 from core.config import DEFAULT_PSR_TYPES, PSR_NAME
 
 # ── Helpers ──────────────────────────────────────────────────────────────
@@ -124,40 +127,11 @@ def query_installed_capacity(
     api_key: str | None = None,
     year: int = 2025,
 ) -> dict[str, float]:
-    """Query installed generation capacity for a country from ENTSO-E.
+    """Return the hand-maintained installed capacity for a country and year.
 
-    Parameters
-    ----------
-    country : str
-        Two-letter country code (e.g. ``"IT"``, ``"DE"``, ``"FR"``).
-    api_key : str | None
-        ENTSO-E API key. If None, loaded from ``ENTSOE_KEY`` env var.
-    year : int
-        Calendar year to query (default 2025).
-
-    Returns
-    -------
-    dict[str, float]
-        Mapping of canonical source name → installed capacity in MW.
-        Returns an empty dict if the API returns no data.
+    The ENTSO-E installed-capacity endpoint is intentionally not used: its
+    Italian solar and wind values are unreliable.  ``api_key`` is retained for
+    backwards compatibility with callers of the old API-backed function.
     """
-    key = _resolve_api_key(api_key)
-    client = EntsoePandasClient(api_key=key)
-
-    start = pd.Timestamp(f"{year}-01-01", tz="UTC")
-    end = pd.Timestamp(f"{year}-12-31", tz="UTC")
-
-    df = client.query_installed_generation_capacity(country, start=start, end=end)
-
-    if df.empty:
-        return {}
-
-    row = df.iloc[0]
-    result: dict[str, float] = {}
-    for col in df.columns:
-        name = PSR_NAME.get(col, col)
-        val = row[col]
-        if pd.notna(val):
-            result[name] = float(val)
-
-    return result
+    del api_key
+    return manual_installed_capacity(country, year)

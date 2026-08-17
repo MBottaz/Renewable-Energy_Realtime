@@ -1,0 +1,26 @@
+{
+  "country": "ES",
+  "updated": "2026-07-29",
+  "sources": {
+    "Biomass": 709.1,
+    "Fossil Brown coal/Lignite": 0.0,
+    "Fossil Coal-derived gas": 0.0,
+    "Fossil Gas": 29943.3,
+    "Fossil Hard coal": 1819.7,
+    "Fossil Oil": 672.2,
+    "Fossil Oil shale": 0.0,
+    "Fossil Peat": 0.0,
+    "Geothermal": 0.0,
+    "Hydro Pumped Storage": 3417.5,
+    "Hydro Run-of-river and poundage": 1154.2,
+    "Hydro Water Reservoir": 15764.6,
+    "Marine": 0.0,
+    "Nuclear": 7117.2,
+    "Other": 129.6,
+    "Other renewable": 620.7,
+    "Solar": 29047.0,
+    "Waste": 545.9,
+    "Wind Offshore": 0.0,
+    "Wind Onshore": 30931.9
+  }
+}

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Query installed generation capacity from ENTSO-E Transparency Platform.
+"""Write hand-maintained installed generation capacity.
 
 Usage:
     python scripts/capacity.py
     python scripts/capacity.py IT
     python scripts/capacity.py IT --output data/capacity_IT.json
 
-Ouputs a JSON file (default ``data/capacity_<CC>.json``) with a human summary
-on stderr.
+Outputs a JSON file (default ``data/capacity_<CC>.json``) with a human summary
+on stderr. Capacity is deliberately not queried from ENTSO-E because the
+Italian solar and wind values returned by that API are unreliable.
 """
 
 from __future__ import annotations
@@ -22,12 +23,12 @@ import pandas as pd
 # Allow `python scripts/capacity.py` to import core/
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from core.capacity import manual_installed_capacity  # noqa: E402
 from core.config import DATA_DIR  # noqa: E402
-from core.entsoe import query_installed_capacity  # noqa: E402
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Query installed generation capacity.")
+    parser = argparse.ArgumentParser(description="Write hand-maintained installed capacity.")
     parser.add_argument("country", nargs="?", default="IT", help="Country code (default IT)")
     parser.add_argument(
         "--output",
@@ -41,13 +42,10 @@ def main() -> None:
     output = args.output or str(DATA_DIR / f"capacity_{args.country}.json")
 
     try:
-        capacities = query_installed_capacity(args.country, year=args.year)
+        capacities = manual_installed_capacity(args.country, year=args.year)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         sys.exit(1)
-
-    if not capacities:
-        print(f"warning: no capacity data returned for {args.country}", file=sys.stderr)
 
     payload = {
         "country": args.country,

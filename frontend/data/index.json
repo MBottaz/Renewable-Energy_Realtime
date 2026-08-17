@@ -1,0 +1,58 @@
+{
+  "countries": [
+    {
+      "code": "IT",
+      "name": "Italia",
+      "date_start": "2026-01-01",
+      "date_end": "2026-07-29"
+    },
+    {
+      "code": "DE",
+      "name": "Germania",
+      "date_start": "2026-01-01",
+      "date_end": "2026-07-29"
+    },
+    {
+      "code": "FR",
+      "name": "Francia",
+      "date_start": "2026-01-01",
+      "date_end": "2026-07-29"
+    },
+    {
+      "code": "ES",
+      "name": "Spagna",
+      "date_start": "2026-01-01",
+      "date_end": "2026-07-29"
+    },
+    {
+      "code": "PL",
+      "name": "Polonia",
+      "date_start": "2026-01-01",
+      "date_end": "2026-07-29"
+    },
+    {
+      "code": "NL",
+      "name": "Paesi Bassi",
+      "date_start": "2026-01-01",
+      "date_end": "2026-07-29"
+    },
+    {
+      "code": "BE",
+      "name": "Belgio",
+      "date_start": "2026-01-01",
+      "date_end": "2026-07-29"
+    },
+    {
+      "code": "AT",
+      "name": "Austria",
+      "date_start": "2026-01-01",
+      "date_end": "2026-07-29"
+    },
+    {
+      "code": "CH",
+      "name": "Svizzera",
+      "date_start": "2026-01-01",
+      "date_end": "2026-07-29"
+    }
+  ]
+}

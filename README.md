@@ -7,14 +7,14 @@ Modular toolkit for matching renewable energy production to demand, simulating h
 ```
 core/                     # Reusable Python library (no install needed)
   config.py               # Constants: PSR map, source classifications, dispatch order, colors, countries, paths
-  entsoe.py               # ENTSO-E data access: fetch_production(), query_installed_capacity()
+  entsoe.py               # ENTSO-E production data access (capacity is manual)
   dispatch.py             # Pure dispatch logic: dispatch_hour()
   engine.py               # Orchestrator: match() + write_match_results()
   plot.py                 # plot_match_results() — stacked area chart
   export.py               # Frontend-asset export: build() — data/ → frontend/data/*.json + js/data.js
 scripts/                  # Thin runnable CLIs (python scripts/<name>.py)
   fetch.py                # Fetch ENTSO-E generation → CSV (data/)
-  capacity.py             # Query installed capacity (MW)
+  capacity.py             # Write hand-maintained installed capacity (MW)
   match.py                # Run dispatch simulation → output/
   plot.py                 # Plot match results → PNG
   build.py                # Offline build: data/ → frontend/data/*.json + js/data.js
@@ -80,11 +80,11 @@ python scripts/fetch.py --country IT --start 2025-08-01 --end 2026-07-31
 
 Writes `data/entsoe_<CC>_<start>_<end>.csv`.
 
-### Query installed capacity
+### Set installed capacity
 
 ```
-python scripts/capacity.py            # defaults to IT
-python scripts/capacity.py DE
+python scripts/capacity.py            # defaults to IT (no API call)
+python scripts/capacity.py IT --year 2025
 ```
 
 ### Run the dispatch simulation
@@ -109,7 +109,7 @@ Complete offline workflow:
 
 ```
 python scripts/fetch.py --country IT --start 2025-08-01 --end 2026-07-31  # 1. download one year
-python scripts/capacity.py IT                      # 2. installed capacity → data/capacity_IT.json
+python scripts/capacity.py IT                      # 2. hand-maintained capacity → data/capacity_IT.json
 python scripts/build.py                            # 3. regenerate frontend assets
 # 4. open frontend/index.html (double-click — works via file://, no server)
 ```
@@ -124,7 +124,7 @@ to run first (`fetch.py` / `capacity.py`).
 ## Python API
 
 ```python
-from core import match, fetch_production, query_installed_capacity, SourceMeta
+from core import match, fetch_production, SourceMeta
 
 # Fetch data
 df = fetch_production("IT", start, end, api_key)
@@ -162,8 +162,10 @@ the browser allows history updates.
 
 The dispatch simulation is **not** part of the frontend — it runs offline in
 the Python engine (`scripts/match.py` → `output/`), and the frontend only
-visualizes observed production, demand, and installed capacity. The simulation
-is kept as-is for now; porting it to JavaScript is planned for the future.
+visualizes observed production, demand, and installed capacity. For Italy, the
+2025 installed values are maintained by hand: 43,512 MW solar and 13,629 MW
+combined onshore/offshore wind. The simulation is kept as-is for now; porting it
+to JavaScript is planned for the future.
 
 ## Validation
 

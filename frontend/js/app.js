@@ -66,7 +66,7 @@ if (typeof document !== 'undefined') {
       'Hydro Run-of-river and poundage': '#42A5F5',
       'Hydro Water Reservoir': '#0D47A1',
       'Other renewable': '#26A69A',
-      'Solar': '#F4C430',
+      'Solar': '#FFD700',
       'Wind Offshore': '#2E7D32',
       'Wind Onshore': '#66BB6A',
       'Energy storage': '#D32F2F',
@@ -83,7 +83,7 @@ if (typeof document !== 'undefined') {
       'Other': '#94A3B8'
     };
     var FALLBACK_COLORS = [
-      '#42A5F5', '#66BB6A', '#F4C430', '#7E57C2', '#D32F2F', '#795548',
+      '#42A5F5', '#66BB6A', '#FFD700', '#7E57C2', '#D32F2F', '#795548',
       '#64748B', '#00838F'
     ];
 
@@ -347,7 +347,8 @@ if (typeof document !== 'undefined') {
             return value * 0.25;
           }),
           borderColor: color,
-          backgroundColor: hexToRgba(color, 0.58),
+          // Keep the stacked area hue identical to its legend swatch.
+          backgroundColor: color,
           borderWidth: 0.7,
           fill: true,
           tension: 0.1,
@@ -428,13 +429,6 @@ if (typeof document !== 'undefined') {
       });
       productionCaption.textContent = 'Country ' + code + ' · ' + dateStart.value +
         ' → ' + dateEnd.value + ' · hourly energy in MWh (UTC)';
-    }
-
-    function hexToRgba(hex, alpha) {
-      var red = parseInt(hex.slice(1, 3), 16);
-      var green = parseInt(hex.slice(3, 5), 16);
-      var blue = parseInt(hex.slice(5, 7), 16);
-      return 'rgba(' + red + ',' + green + ',' + blue + ',' + alpha + ')';
     }
 
     boot();

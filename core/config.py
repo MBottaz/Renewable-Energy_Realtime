@@ -164,7 +164,8 @@ PLOT_COLORS: dict[str, str] = {
     "Hydro Run-of-river and poundage": "#42A5F5",
     "Hydro Water Reservoir": "#0D47A1",
     "Other renewable": "#26A69A",
-    "Solar": "#F4C430",
+    # Bright gold keeps solar visibly yellow in both filled areas and legends.
+    "Solar": "#FFD700",
     "Wind Offshore": "#2E7D32",
     "Wind Onshore": "#66BB6A",
     "Energy storage": "#D32F2F",

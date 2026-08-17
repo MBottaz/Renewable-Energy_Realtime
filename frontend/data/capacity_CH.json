@@ -1,0 +1,10 @@
+{
+  "country": "CH",
+  "updated": "2026-07-29",
+  "sources": {
+    "Hydro Pumped Storage": 6696.7,
+    "Hydro Run-of-river and poundage": 634.5,
+    "Hydro Water Reservoir": 5777.0,
+    "Nuclear": 2983.0
+  }
+}

@@ -1,8 +1,8 @@
 Here I keep track of the assumptions I have made and some explaination that can help a better understanding of the simulations.
 
-**Solar Target Capacity**: TBD
+**Italy 2025 installed capacity**: Solar **43,512 MW** and wind **13,629 MW** (onshore + offshore combined). These values are maintained by hand because the ENTSO-E capacity data for Italy are unreliable for these technologies.
 
-**Wind Target Capacity** I've assumed 100GW, that is the amount of the wind farms currently under approval, according to [IEA](https://iea-wind.org/wp-content/uploads/2023/10/Italy_2022.pdf)
+The remaining installed-capacity values are retained from the existing project snapshot.
 
 **Hydro** I've got data for three different Hydro power plants:
 - *Rivers*: Not flexible;

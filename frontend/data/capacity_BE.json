@@ -1,0 +1,18 @@
+{
+  "country": "BE",
+  "updated": "2026-07-29",
+  "sources": {
+    "Biomass": 731.01,
+    "Energy storage": 394.16,
+    "Fossil Gas": 8033.3,
+    "Fossil Oil": 589.52,
+    "Hydro Pumped Storage": 1308.0,
+    "Hydro Run-of-river and poundage": 144.33,
+    "Nuclear": 3929.0,
+    "Other": 328.67,
+    "Solar": 10696.21,
+    "Waste": 328.6,
+    "Wind Offshore": 2262.1,
+    "Wind Onshore": 3177.08
+  }
+}

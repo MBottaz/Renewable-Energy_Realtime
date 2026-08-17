@@ -1,0 +1,21 @@
+{
+  "country": "FR",
+  "updated": "2026-07-29",
+  "sources": {
+    "Biomass": 1412.68051,
+    "Fossil Gas": 12787.69316,
+    "Fossil Hard coal": 1810.719,
+    "Fossil Oil": 2978.8974,
+    "Geothermal": 1.85,
+    "Hydro Pumped Storage": 5060.7845,
+    "Hydro Run-of-river and poundage": 11737.05322,
+    "Hydro Water Reservoir": 8791.125,
+    "Marine": 243.09194,
+    "Nuclear": 62990.0,
+    "Other": 1022.95527,
+    "Solar": 22860.036784,
+    "Waste": 1062.73976,
+    "Wind Offshore": 1028.2,
+    "Wind Onshore": 22907.07063
+  }
+}

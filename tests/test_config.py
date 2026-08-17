@@ -29,6 +29,10 @@ def test_plot_colors_are_nonempty():
         assert isinstance(color, str) and color.startswith("#")
 
 
+def test_solar_color_is_bright_yellow():
+    assert PLOT_COLORS["Solar"] == "#FFD700"
+
+
 def test_countries_are_well_formed():
     assert COUNTRIES
     for c in COUNTRIES:

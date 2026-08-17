@@ -4,8 +4,8 @@
 Usage:
     python scripts/build.py [--data DIR] [--frontend DIR]
 
-Reads ``data/entsoe_<CC>_*.csv`` (production) and ``data/capacity_<CC>.json``
-(installed capacity) and writes, per country:
+Reads ``data/entsoe_<CC>_*.csv`` (production) and the hand-maintained
+``data/capacity_<CC>.json`` (installed capacity) and writes, per country:
 
     frontend/data/production_<CC>.json   # 15-min series, mirrors generation API
     frontend/data/capacity_<CC>.json     # installed capacity, mirrors capacity API
@@ -14,7 +14,7 @@ Reads ``data/entsoe_<CC>_*.csv`` (production) and ``data/capacity_<CC>.json``
 No network calls.  Download the data first with:
 
     python scripts/fetch.py --country IT --start ... --end ...
-    python scripts/capacity.py IT --output data/capacity_IT.json
+    python scripts/capacity.py IT --output data/capacity_IT.json  # hand-maintained values
 
 The frontend is then a fully static site that works by opening ``index.html``.
 """

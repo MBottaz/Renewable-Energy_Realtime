@@ -88,7 +88,8 @@ def plot_match_results(
     y_data = coverage[sources].values.T  # (n_sources, n_hours)
     colors = [get_source_color(name) for name in sources]
 
-    ax1.stackplot(timestamps, y_data, labels=sources, colors=colors, alpha=0.85)
+    # Use opaque fills so the area color matches the legend swatch exactly.
+    ax1.stackplot(timestamps, y_data, labels=sources, colors=colors, alpha=1.0)
 
     # Demand line
     if shortfall is not None:

@@ -8,7 +8,7 @@ the raw data already downloaded into ``data/`` (no network) and emits:
   mirroring the ENTSO-E generation API output (kept at 15-min granularity;
   aggregation to hourly happens in JavaScript, see ``frontend/js/app.js``);
 - ``frontend/data/capacity_<CC>.json`` — installed capacity by source,
-  copied as-is from ``data/capacity_<CC>.json`` (mirrors the capacity API);
+  copied as-is from the hand-maintained ``data/capacity_<CC>.json``;
 - ``frontend/js/data.js`` — thin wrapper ``window.APP_DATA = {production, capacity}``
   so the browser can read the data from ``file://``.
 
@@ -77,8 +77,8 @@ def build(
 ) -> list[str]:
     """Offline build: ``data/`` → ``frontend/data/*.json`` + ``frontend/js/data.js``.
 
-    Reads ``data/entsoe_<CC>_*.csv`` (production) and ``data/capacity_<CC>.json``
-    (installed capacity) and writes, per country:
+    Reads ``data/entsoe_<CC>_*.csv`` (production) and the hand-maintained
+    ``data/capacity_<CC>.json`` (installed capacity) and writes, per country:
 
     - ``frontend/data/production_<CC>.json``
     - ``frontend/data/capacity_<CC>.json`` (copied as-is)

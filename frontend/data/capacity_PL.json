@@ -1,0 +1,18 @@
+{
+  "country": "PL",
+  "updated": "2026-07-29",
+  "sources": {
+    "Biomass": 636.389,
+    "Fossil Brown coal/Lignite": 6951.0,
+    "Fossil Coal-derived gas": 469.858,
+    "Fossil Gas": 5341.058,
+    "Fossil Hard coal": 18543.873,
+    "Fossil Oil": 392.535,
+    "Hydro Pumped Storage": 1524.774,
+    "Hydro Run-of-river and poundage": 322.044,
+    "Hydro Water Reservoir": 467.878,
+    "Other": 1737.99,
+    "Solar": 17815.728,
+    "Wind Onshore": 10299.316
+  }
+}

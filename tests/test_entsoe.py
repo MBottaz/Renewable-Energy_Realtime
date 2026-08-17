@@ -32,12 +32,8 @@ def mock_client():
         gen.columns = pd.MultiIndex.from_tuples(gen.columns)
         client.query_generation.return_value = gen
 
-        # Mock installed capacity
-        cap = pd.DataFrame(
-            {"Solar": [5000.0], "Wind Onshore": [12000.0]},
-            index=pd.Index(["IT"]),
-        )
-        client.query_installed_generation_capacity.return_value = cap
+        # This endpoint must not be called: capacity is hand-maintained.
+        client.query_installed_generation_capacity.return_value = pd.DataFrame()
 
         yield client
 
@@ -65,19 +61,14 @@ def test_fetch_production_handles_empty_generation(mock_client):
     assert len(df.columns) == 2
 
 
-def test_query_installed_capacity_returns_dict(mock_client):
-    cap = query_installed_capacity("IT", api_key="fake-key")
-    assert "Solar" in cap
-    assert cap["Solar"] == 5000.0
-    assert cap["Wind Onshore"] == 12000.0
+def test_query_installed_capacity_uses_manual_italian_values(mock_client):
+    cap = query_installed_capacity("IT", api_key="unused")
+    assert cap["Solar"] == 43512.0
+    assert cap["Wind Onshore"] == 13629.0
+    assert cap["Wind Offshore"] == 0.0
+    mock_client.query_installed_generation_capacity.assert_not_called()
 
 
-def test_query_installed_capacity_empty(mock_client):
-    mock_client.query_installed_generation_capacity.return_value = pd.DataFrame()
-    cap = query_installed_capacity("IT", api_key="fake-key")
-    assert cap == {}
-
-
-def test_missing_api_key_raises():
-    with pytest.raises(ValueError, match="ENTSOE_KEY"):
-        query_installed_capacity("IT", api_key="")
+def test_query_installed_capacity_rejects_unsupported_country():
+    with pytest.raises(ValueError, match="no manual capacity data"):
+        query_installed_capacity("DE", api_key="unused")
