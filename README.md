@@ -5,6 +5,7 @@ Modular toolkit for matching renewable energy production to demand, simulating h
 ## Directory Structure
 
 ```
+pipeline.py               # marimo notebook: fetch → clean → upscale (interactive)
 core/                     # Reusable Python library (no install needed)
   config.py               # Constants: PSR map, source classifications, dispatch order, colors, countries, paths
   entsoe.py               # ENTSO-E production data access (capacity is manual)
@@ -30,6 +31,25 @@ data/                     # Raw fetched CSVs (gitignored)
 output/                   # Match/plot results (gitignored)
 docs/                     # PLAN.md, sources.md
 ```
+
+## Step-by-step notebook (marimo)
+
+`pipeline.py` is an interactive [marimo](https://marimo.io) notebook that walks
+through the pipeline one step at a time, importing only what it needs from `core/`:
+
+```bash
+uv run marimo edit pipeline.py   # open and run it interactively
+uv run marimo run pipeline.py    # read-only view
+```
+
+| Step | What it does |
+|------|--------------|
+| **1 · Fetch** | Queries ENTSO-E, but is **skippable**: if a local `data/entsoe_<CC>_*.csv` exists (or the bundled `frontend/data/production_<CC>.csv`), it is reused and no API call is made. |
+| **2 · Clean & prepare** | Parses timestamps (UTC), removes duplicates, clips negatives, rebuilds a complete 15-min grid, drops empty sources, then shows statistics and a preview chart. |
+| **3 · Upscaling** | You type the **target installed MW** for each renewable source; the notebook derives `factor = target ÷ current capacity` and writes `df_scaled` (historical generation scaled by factor, demand untouched). |
+
+The dispatch simulation, results export and frontend build are **not** in the
+notebook yet — they are the planned follow-up steps.
 
 ## How the Engine Works
 
